@@ -1,5 +1,5 @@
 # llm-stream-adapter
-
+A lightweight adapter that bridges streaming clients with non-streaming LLM backends using OpenAI-compatible APIs.
 一个“零或极少外部依赖”的 Node.js HTTP 代理：
 
 - 对外提供 OpenAI 兼容接口：`POST /v1/chat/completions`
