@@ -8,6 +8,7 @@ const UPSTREAM_BASE_URL = process.env.UPSTREAM_BASE_URL || 'http://127.0.0.1:800
 const API_KEY = process.env.API_KEY || '';
 const CHUNK_SIZE = Math.max(1, Number(process.env.CHUNK_SIZE || 16));
 const CHUNK_DELAY_MS = Math.max(0, Number(process.env.CHUNK_DELAY_MS || 20));
+const ROUTE_PREFIX = (process.env.ROUTE_PREFIX || '').replace(/\/+$/, '');
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -323,18 +324,24 @@ async function handleChatCompletions(req, res, reqId) {
 const server = http.createServer(async (req, res) => {
   const reqId = req.headers['x-request-id'] || genId('req');
   const start = Date.now();
+  const rawUrl = req.url || '/';
+  const pathname = new URL(rawUrl, 'http://localhost').pathname;
+  const chatRoute = `${ROUTE_PREFIX}/v1/chat/completions`;
+  const healthRoute = `${ROUTE_PREFIX}/healthz`;
+  const isChatCompletionsRoute = pathname === chatRoute || (!ROUTE_PREFIX && pathname.endsWith('/v1/chat/completions'));
+  const isHealthRoute = pathname === healthRoute || (!ROUTE_PREFIX && pathname.endsWith('/healthz'));
 
   req.socket.setKeepAlive(true, 60_000);
 
-  console.log(`[${reqId}] ${req.method} ${req.url}`);
+  console.log(`[${reqId}] ${req.method} ${rawUrl}`);
 
-  if (req.method === 'POST' && req.url === '/v1/chat/completions') {
+  if (req.method === 'POST' && isChatCompletionsRoute) {
     await handleChatCompletions(req, res, reqId);
     console.log(`[${reqId}] done ${Date.now() - start}ms`);
     return;
   }
 
-  if (req.method === 'GET' && req.url === '/healthz') {
+  if (req.method === 'GET' && isHealthRoute) {
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify({ ok: true }));
     return;
@@ -348,6 +355,6 @@ server.headersTimeout = 80_000;
 
 server.listen(PORT, () => {
   console.log(
-    `[startup] listening on :${PORT} upstream=${UPSTREAM_BASE_URL} chunk_size=${CHUNK_SIZE} chunk_delay_ms=${CHUNK_DELAY_MS}`
+    `[startup] listening on :${PORT} upstream=${UPSTREAM_BASE_URL} route_prefix=${ROUTE_PREFIX || '(none)'} chunk_size=${CHUNK_SIZE} chunk_delay_ms=${CHUNK_DELAY_MS}`
   );
 });
