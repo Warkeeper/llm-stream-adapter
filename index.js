@@ -221,8 +221,9 @@ async function streamChoiceAsSSE(res, { id, model, created, choice, choiceIndex 
 }
 
 async function forwardToUpstream(body, reqId) {
+  const { stream_options: _ignoredStreamOptions, ...forwardBody } = body || {};
   const upstreamPayload = {
-    ...body,
+    ...forwardBody,
     stream: false,
   };
 
