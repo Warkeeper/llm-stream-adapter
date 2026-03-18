@@ -17,6 +17,7 @@ A lightweight adapter that bridges streaming clients with non-streaming LLM back
 PORT=3000 \\
 UPSTREAM_BASE_URL=http://127.0.0.1:8000 \\
 API_KEY=your_upstream_key \\
+ROUTE_PREFIX= \\
 CHUNK_SIZE=16 \\
 CHUNK_DELAY_MS=20 \\
 node index.js
@@ -27,8 +28,14 @@ node index.js
 - `PORT`：服务端口，默认 `3000`
 - `UPSTREAM_BASE_URL`：上游基地址（例如 `http://127.0.0.1:8000`）
 - `API_KEY`：上游鉴权 token（可选）
+- `ROUTE_PREFIX`：对外路由前缀（可选），例如设为 `/deepseek` 后可接收 `POST /deepseek/v1/chat/completions` 与 `GET /deepseek/healthz`
 - `CHUNK_SIZE`：拆分粒度，默认 `16`
 - `CHUNK_DELAY_MS`：每个 chunk 的延迟（毫秒），默认 `20`
+
+> 路由兼容说明：
+>
+> - 未设置 `ROUTE_PREFIX` 时，默认可接收 `/v1/chat/completions`，并兼容带前缀的 `/xxx/v1/chat/completions`。
+> - 设置 `ROUTE_PREFIX=/deepseek` 时，将严格匹配 `/deepseek/v1/chat/completions`（避免多路由混淆）。
 
 ## 示例请求
 
